@@ -2,35 +2,101 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Color Mixing Lab</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎨 Color Mixing Lab</title>
 <style>
-  body {
+  * {
     margin: 0;
-    font-family: Arial, sans-serif;
-    background: #eef2f3;
-    text-align: center;
+    padding: 0;
+    box-sizing: border-box;
   }
-  h1 { margin: 20px; }
+
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .container {
+    max-width: 1000px;
+    width: 100%;
+  }
+
+  header {
+    text-align: center;
+    color: white;
+    margin-bottom: 50px;
+    animation: slideDown 0.6s ease-out;
+  }
+
+  h1 {
+    font-size: 3.5em;
+    font-weight: 700;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+  }
+
+  .subtitle {
+    font-size: 1.1em;
+    opacity: 0.95;
+    font-weight: 300;
+    letter-spacing: 0.5px;
+  }
 
   #lab {
-    display: flex;
-    justify-content: center;
-    align-items: flex-end;
-    gap: 40px;
-    margin-top: 30px;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 35px;
+    margin-bottom: 50px;
+    animation: fadeIn 0.8s ease-out 0.2s both;
   }
 
-  .unit { text-align: center; }
+  .unit {
+    text-align: center;
+    perspective: 1000px;
+  }
+
+  .beaker-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 18px;
+  }
 
   .beaker {
-    width: 120px;
-    height: 200px;
-    border: 3px solid #333;
-    border-radius: 12px;
-    background: white;
+    width: 130px;
+    height: 220px;
+    border: 4px solid rgba(255,255,255,0.9);
+    border-radius: 15px 15px 8px 8px;
+    background: linear-gradient(to right, rgba(255,255,255,0.95), rgba(255,255,255,0.7));
     position: relative;
     overflow: hidden;
+    box-shadow: 
+      0 10px 30px rgba(0,0,0,0.3),
+      inset 0 2px 5px rgba(255,255,255,0.5);
+    transition: transform 0.3s ease;
+  }
+
+  .beaker:hover {
+    transform: translateY(-5px);
+  }
+
+  .beaker::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, transparent 30%, rgba(255,255,255,0.1) 100%);
+    pointer-events: none;
+    border-radius: 15px 15px 8px 8px;
   }
 
   .liquid {
@@ -38,89 +104,305 @@
     bottom: 0;
     width: 100%;
     height: 0%;
-    transition: height 0.4s ease, background-color 0.3s ease;
+    transition: height 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.4s ease;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  .beaker-label {
+    position: absolute;
+    bottom: -35px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-weight: 600;
+    color: white;
+    font-size: 0.95em;
+    white-space: nowrap;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
   }
 
   button {
-    margin-top: 8px;
-    padding: 8px 12px;
+    padding: 12px 20px;
     cursor: pointer;
-    font-size: 14px;
-    border-radius: 6px;
-    border: 1px solid #aaa;
-    background: #fff;
-  }
-  button:hover { background: #f0f0f0; }
-
-  #resultLabel {
-    margin-top: 24px;
-    font-size: 20px;
-    font-weight: bold;
+    font-size: 15px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 
-  #poeticLabel {
-    font-size: 13px;
-    color: #777;
-    font-style: italic;
-    margin-top: 4px;
+  .pour-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    width: 100%;
   }
 
-  #pourCount {
-    font-size: 13px;
-    color: #888;
-    margin-top: 6px;
+  .pour-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+  }
+
+  .pour-btn:active {
+    transform: scale(0.98);
+  }
+
+  .reset-btn {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    width: 100%;
+  }
+
+  .reset-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+  }
+
+  .reset-btn:active {
+    transform: scale(0.98);
+  }
+
+  .result-section {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 15px 50px rgba(0,0,0,0.2);
+    animation: fadeIn 0.8s ease-out 0.4s both;
+  }
+
+  .result-header {
+    font-size: 1.3em;
+    color: #333;
+    font-weight: 600;
+    margin-bottom: 25px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .result-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    align-items: center;
+  }
+
+  .swatch-display {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 20px;
   }
 
   #swatch {
-    display: inline-block;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    border: 2px solid #333;
-    vertical-align: middle;
-    margin-right: 10px;
+    width: 100px;
+    height: 100px;
+    border-radius: 15px;
+    border: 4px solid #ddd;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
     background: white;
-    transition: background 0.3s ease;
+    transition: all 0.4s ease;
+  }
+
+  #swatch:hover {
+    transform: scale(1.05);
+    box-shadow: 0 12px 35px rgba(0,0,0,0.2);
+  }
+
+  .color-info {
+    text-align: center;
+  }
+
+  #resultLabel {
+    font-size: 1.5em;
+    font-weight: 700;
+    color: #667eea;
+    margin-bottom: 15px;
+    word-break: break-word;
+  }
+
+  #poeticLabel {
+    font-size: 1.2em;
+    color: #764ba2;
+    font-style: italic;
+    font-weight: 500;
+    margin-bottom: 12px;
+    opacity: 0.9;
+  }
+
+  #pourCount {
+    font-size: 0.95em;
+    color: #888;
+    background: #f5f5f5;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+    font-family: 'Monaco', 'Courier New', monospace;
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-top: 25px;
+  }
+
+  .stat-item {
+    background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+    border: 1px solid #667eea30;
+  }
+
+  .stat-label {
+    font-size: 0.85em;
+    color: #888;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+  }
+
+  .stat-value {
+    font-size: 1.5em;
+    font-weight: 700;
+    color: #667eea;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @media (max-width: 768px) {
+    h1 {
+      font-size: 2.5em;
+    }
+
+    #lab {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 25px;
+      margin-bottom: 40px;
+    }
+
+    .result-content {
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    .result-section {
+      padding: 30px 20px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    body {
+      padding: 20px 15px;
+    }
+
+    h1 {
+      font-size: 2em;
+    }
+
+    #lab {
+      grid-template-columns: 1fr;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .result-section {
+      padding: 20px 15px;
+    }
+
+    .result-content {
+      gap: 15px;
+    }
   }
 </style>
 </head>
 <body>
 
-<h1>Color Mixing Lab</h1>
+<div class="container">
+  <header>
+    <h1>🎨 Color Mixing Lab</h1>
+    <p class="subtitle">Discover the magic of color combinations</p>
+  </header>
 
-<div id="lab">
-  <div class="unit">
-    <div class="beaker">
-      <div class="liquid" id="liqRed" style="background:rgb(220,50,50); height:100%"></div>
+  <div id="lab">
+    <div class="unit">
+      <div class="beaker-container">
+        <div class="beaker">
+          <div class="liquid" id="liqRed" style="background: linear-gradient(180deg, #ff6b6b 0%, #dc3232 100%); height:100%"></div>
+        </div>
+        <div class="beaker-label">Red</div>
+      </div>
+      <button class="pour-btn" onclick="pour('red')">🔴 Pour Red</button>
     </div>
-    <button onclick="pour('red')">Pour Red</button>
+
+    <div class="unit">
+      <div class="beaker-container">
+        <div class="beaker">
+          <div class="liquid" id="liqBlue" style="background: linear-gradient(180deg, #4c88ff 0%, #3250dc 100%); height:100%"></div>
+        </div>
+        <div class="beaker-label">Blue</div>
+      </div>
+      <button class="pour-btn" onclick="pour('blue')">🔵 Pour Blue</button>
+    </div>
+
+    <div class="unit">
+      <div class="beaker-container">
+        <div class="beaker">
+          <div class="liquid" id="liqYellow" style="background: linear-gradient(180deg, #ffd93d 0%, #dcc832 100%); height:100%"></div>
+        </div>
+        <div class="beaker-label">Yellow</div>
+      </div>
+      <button class="pour-btn" onclick="pour('yellow')">🟡 Pour Yellow</button>
+    </div>
+
+    <div class="unit">
+      <div class="beaker-container">
+        <div class="beaker" id="mixBeaker">
+          <div class="liquid" id="mixLiquid"></div>
+        </div>
+        <div class="beaker-label">Mix</div>
+      </div>
+      <button class="reset-btn" onclick="resetMix()">✨ Reset</button>
+    </div>
   </div>
 
-  <div class="unit">
-    <div class="beaker">
-      <div class="liquid" id="liqBlue" style="background:rgb(50,80,220); height:100%"></div>
+  <div class="result-section">
+    <div class="result-header">Your Creation</div>
+    <div class="result-content">
+      <div class="swatch-display">
+        <div id="swatch"></div>
+        <div class="color-info">
+          <div id="resultLabel">Start mixing!</div>
+          <div id="poeticLabel"></div>
+        </div>
+      </div>
+      <div>
+        <div id="pourCount"></div>
+        <div class="stats" id="statsContainer"></div>
+      </div>
     </div>
-    <button onclick="pour('blue')">Pour Blue</button>
-  </div>
-
-  <div class="unit">
-    <div class="beaker">
-      <div class="liquid" id="liqYellow" style="background:rgb(220,200,0); height:100%"></div>
-    </div>
-    <button onclick="pour('yellow')">Pour Yellow</button>
-  </div>
-
-  <div class="unit">
-    <div class="beaker" id="mixBeaker">
-      <div class="liquid" id="mixLiquid"></div>
-    </div>
-    <button onclick="resetMix()">Reset</button>
   </div>
 </div>
-
-<div id="resultLabel"><span id="swatch"></span>Result: none</div>
-<div id="poeticLabel"></div>
-<div id="pourCount"></div>
 
 <script>
 let contents = [];
@@ -184,22 +466,22 @@ function mixColors(hexA, hexB) {
 
 function poeticName(hex) {
   const [h, s, l] = rgbToHsl(...hexToRgb(hex));
-  if (s < 8)  return l > 70 ? 'white fog' : l < 30 ? 'deep shadow' : 'stone gray';
+  if (s < 8)  return l > 70 ? '✨ White Fog' : l < 30 ? '🌑 Deep Shadow' : '⚫ Stone Gray';
   const names = [
-    [0,15,'rose blush'],[15,30,'ember red'],[30,45,'burnt sienna'],
-    [45,60,'warm amber'],[60,75,'golden hour'],[75,90,'olive dusk'],
-    [90,120,'spring leaf'],[120,150,'forest green'],[150,180,'ocean mint'],
-    [180,210,'teal mist'],[210,240,'sky cerulean'],[240,270,'cobalt blue'],
-    [270,300,'iris violet'],[300,330,'wild lavender'],[330,360,'rose blush'],
+    [0,15,'🌹 Rose Blush'],[15,30,'🔥 Ember Red'],[30,45,'🏜️ Burnt Sienna'],
+    [45,60,'🌅 Warm Amber'],[60,75,'✨ Golden Hour'],[75,90,'🌿 Olive Dusk'],
+    [90,120,'🌱 Spring Leaf'],[120,150,'🌲 Forest Green'],[150,180,'🌊 Ocean Mint'],
+    [180,210,'💎 Teal Mist'],[210,240,'🌤️ Sky Cerulean'],[240,270,'💙 Cobalt Blue'],
+    [270,300,'👾 Iris Violet'],[300,330,'🌸 Wild Lavender'],[330,360,'🌹 Rose Blush'],
   ];
-  const base = (names.find(([lo,hi]) => h >= lo && h < hi) || [])[2] || 'mixed hue';
-  if (s < 30) return 'muted ' + base;
-  if (l > 70) return 'pale ' + base;
-  if (l < 35) return 'deep ' + base;
+  const base = (names.find(([lo,hi]) => h >= lo && h < hi) || [])[2] || '🎨 Mixed Hue';
+  if (s < 30) return '💫 Muted ' + base.split(' ').slice(1).join(' ');
+  if (l > 70) return '☁️ Pale ' + base.split(' ').slice(1).join(' ');
+  if (l < 35) return '🌑 Deep ' + base.split(' ').slice(1).join(' ');
   return base;
 }
 
-// ── App logic ──────────────────────────────────────────────────────────────
+// ── App logic ────────────────────────────────────────────────────────────
 
 function pour(color) {
   contents.push(color);
@@ -215,21 +497,39 @@ function updateMix() {
 
   const hex = getMixedColor(contents);
 
-  mixLiquid.style.background = hex;
+  mixLiquid.style.background = `linear-gradient(135deg, ${hex}dd 0%, ${hex} 100%)`;
   mixLiquid.style.height = Math.min(100, contents.length * 20) + '%';
   swatch.style.background = hex;
 
-  label.innerHTML = '<span id="swatch" style="display:inline-block;width:32px;height:32px;border-radius:50%;border:2px solid #333;vertical-align:middle;margin-right:10px;background:' + hex + ';transition:background 0.3s ease;"></span>Result: ' + poeticName(hex);
-  poetic.textContent = hex;
+  label.textContent = hex.toUpperCase();
+  poetic.textContent = poeticName(hex);
 
   const counts = {};
   contents.forEach(c => counts[c] = (counts[c] || 0) + 1);
-  pourCount.textContent = Object.entries(counts).map(([c,n]) => n + '× ' + c).join('  +  ');
+  const formula = Object.entries(counts).map(([c,n]) => n + '× ' + c.charAt(0).toUpperCase() + c.slice(1)).join('  +  ');
+  pourCount.innerHTML = '<strong>Formula:</strong><br>' + (formula || 'Empty');
+
+  // Update stats
+  const [h, s, l] = rgbToHsl(...hexToRgb(hex));
+  const statsContainer = document.getElementById('statsContainer');
+  statsContainer.innerHTML = `
+    <div class="stat-item">
+      <div class="stat-label">Hue</div>
+      <div class="stat-value">${h}°</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">Saturation</div>
+      <div class="stat-value">${s}%</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">Lightness</div>
+      <div class="stat-value">${l}%</div>
+    </div>
+  `;
 }
 
 function getMixedColor(list) {
   if (list.length === 0) return '#ffffff';
-  // fold all pours into a running mix using the HSL midpoint engine
   let current = PIGMENTS[list[0]];
   for (let i = 1; i < list.length; i++) {
     current = mixColors(current, PIGMENTS[list[i]]);
@@ -242,9 +542,23 @@ function resetMix() {
   const mixLiquid = document.getElementById('mixLiquid');
   mixLiquid.style.height = '0%';
   mixLiquid.style.background = 'white';
-  document.getElementById('resultLabel').innerHTML = '<span id="swatch" style="display:inline-block;width:32px;height:32px;border-radius:50%;border:2px solid #333;vertical-align:middle;margin-right:10px;background:white;transition:background 0.3s ease;"></span>Result: none';
+  document.getElementById('resultLabel').textContent = 'Start mixing!';
   document.getElementById('poeticLabel').textContent = '';
-  document.getElementById('pourCount').textContent = '';
+  document.getElementById('pourCount').innerHTML = '<strong>Formula:</strong><br>Empty';
+  document.getElementById('statsContainer').innerHTML = `
+    <div class="stat-item">
+      <div class="stat-label">Hue</div>
+      <div class="stat-value">-</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">Saturation</div>
+      <div class="stat-value">-</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">Lightness</div>
+      <div class="stat-value">-</div>
+    </div>
+  `;
 }
 </script>
 
