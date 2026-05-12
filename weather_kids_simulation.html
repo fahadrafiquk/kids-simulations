@@ -1,0 +1,390 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+#ws{font-family:system-ui,sans-serif;width:100%;background:#fff;border-radius:16px;overflow:hidden}
+#scene{position:relative;width:100%;height:320px;overflow:hidden;cursor:crosshair}
+#scene canvas{display:block;width:100%;height:100%}
+#badge{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,0.88);border-radius:99px;padding:6px 20px;font-size:18px;font-weight:700;color:#1a1a2e;white-space:nowrap;pointer-events:none;transition:all 0.4s}
+#hint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);font-size:13px;color:rgba(255,255,255,0.9);pointer-events:none;font-weight:500;text-shadow:0 1px 4px rgba(0,0,0,0.4)}
+.panels{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid #eee}
+.panel{padding:14px 16px;border-right:1px solid #eee}
+.panel:last-child{border-right:none}
+.panel-title{font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#888;margin-bottom:10px}
+.meter-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.meter-icon{font-size:18px;width:24px;text-align:center}
+.meter-label{font-size:12px;color:#555;width:72px;flex-shrink:0}
+.meter-track{flex:1;height:12px;background:#f0f0f0;border-radius:99px;overflow:hidden}
+.meter-fill{height:100%;border-radius:99px;transition:width 0.3s ease,background 0.5s ease}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 16px;background:#fafafa;border-top:1px solid #eee}
+.btn{padding:11px 8px;font-size:14px;font-weight:700;border-radius:12px;border:2px solid;cursor:pointer;transition:transform 0.1s,background 0.2s;display:flex;align-items:center;justify-content:center;gap:6px;font-family:inherit}
+.btn:active{transform:scale(0.95)}
+.btn-sun{background:#FFF8E1;border-color:#F9A825;color:#7A4F00}
+.btn-sun.off{background:#f0f0f0;border-color:#ccc;color:#888}
+.btn-wind{background:#E3F2FD;border-color:#1976D2;color:#0D47A1}
+.btn-cool{background:#E8F5E9;border-color:#388E3C;color:#1B5E20}
+.btn-reset{background:#FCE4EC;border-color:#C62828;color:#7B1616}
+.cycle-bar{display:flex;align-items:center;padding:10px 16px;border-top:1px solid #eee;background:#fdfdfd;gap:0}
+.cyc-step{flex:1;text-align:center;position:relative}
+.cyc-dot{width:28px;height:28px;border-radius:50%;margin:0 auto 4px;display:flex;align-items:center;justify-content:center;font-size:14px;border:2px solid #ddd;background:#f5f5f5;transition:all 0.4s}
+.cyc-dot.active{border-color:transparent;transform:scale(1.18)}
+.cyc-lbl{font-size:10px;font-weight:600;color:#aaa;transition:color 0.4s}
+.cyc-lbl.active{color:#333}
+.cyc-arrow{font-size:12px;color:#ccc;margin-top:-20px;flex-shrink:0}
+</style>
+
+<div id="ws">
+  <div id="scene">
+    <canvas id="c"></canvas>
+    <div id="badge">☀️ Sunny!</div>
+    <div id="hint">Click the sky to place a cloud!</div>
+  </div>
+
+  <div class="cycle-bar">
+    <div class="cyc-step" id="cs0">
+      <div class="cyc-dot active" id="cd0" style="background:#FFF8E1;border-color:#F9A825">☀️</div>
+      <div class="cyc-lbl active" id="cl0">Sunny</div>
+    </div>
+    <div class="cyc-arrow">→</div>
+    <div class="cyc-step" id="cs1">
+      <div class="cyc-dot" id="cd1">🌡️</div>
+      <div class="cyc-lbl" id="cl1">Warm</div>
+    </div>
+    <div class="cyc-arrow">→</div>
+    <div class="cyc-step" id="cs2">
+      <div class="cyc-dot" id="cd2">☁️</div>
+      <div class="cyc-lbl" id="cl2">Cloudy</div>
+    </div>
+    <div class="cyc-arrow">→</div>
+    <div class="cyc-step" id="cs3">
+      <div class="cyc-dot" id="cd3">🌧️</div>
+      <div class="cyc-lbl" id="cl3">Rainy</div>
+    </div>
+    <div class="cyc-arrow">→</div>
+    <div class="cyc-step" id="cs4">
+      <div class="cyc-dot" id="cd4">❄️</div>
+      <div class="cyc-lbl" id="cl4">Cool</div>
+    </div>
+  </div>
+
+  <div class="panels">
+    <div class="panel">
+      <div class="panel-title">Weather meters</div>
+      <div class="meter-row">
+        <span class="meter-icon">🌡️</span>
+        <span class="meter-label">Heat</span>
+        <div class="meter-track"><div class="meter-fill" id="m-temp" style="width:60%;background:#F9A825"></div></div>
+      </div>
+      <div class="meter-row">
+        <span class="meter-icon">☁️</span>
+        <span class="meter-label">Clouds</span>
+        <div class="meter-track"><div class="meter-fill" id="m-cloud" style="width:5%;background:#90A4AE"></div></div>
+      </div>
+      <div class="meter-row">
+        <span class="meter-icon">🌧️</span>
+        <span class="meter-label">Rain</span>
+        <div class="meter-track"><div class="meter-fill" id="m-rain" style="width:0%;background:#42A5F5"></div></div>
+      </div>
+      <div class="meter-row">
+        <span class="meter-icon">💨</span>
+        <span class="meter-label">Wind</span>
+        <div class="meter-track"><div class="meter-fill" id="m-wind" style="width:20%;background:#80DEEA"></div></div>
+      </div>
+    </div>
+    <div class="panel" style="border-right:none">
+      <div class="panel-title">What's happening?</div>
+      <div id="explain" style="font-size:13px;line-height:1.7;color:#444;min-height:80px"></div>
+    </div>
+  </div>
+
+  <div class="btns">
+    <button class="btn btn-sun" id="btn-sun" onclick="W.toggleSun()">☀️ Sun ON</button>
+    <button class="btn btn-wind" onclick="W.addWind()">💨 Add Wind</button>
+    <button class="btn btn-cool" onclick="W.coolDown()">❄️ Cool Down</button>
+    <button class="btn btn-reset" onclick="W.reset()">↺ Reset</button>
+  </div>
+</div>
+
+<script>
+(function(){
+const canvas=document.getElementById('c');
+const ctx=canvas.getContext('2d');
+let W_=canvas.offsetWidth,H_=320;
+canvas.width=W_;canvas.height=H_;
+window.addEventListener('resize',()=>{W_=canvas.offsetWidth;canvas.width=W_});
+
+const S={temp:60,clouds:5,rain:0,wind:2,sunOn:true,tick:0};
+
+const clouds=[];
+function mkCloud(x,y,sz){return{x,y,sz,tsz:sz,alpha:sz*5,spd:0.3+Math.random()*0.4}}
+for(let i=0;i<6;i++) clouds.push(mkCloud(Math.random()*900,45+Math.random()*90,0.04+Math.random()*0.06));
+
+const drops=[];
+for(let i=0;i<220;i++) drops.push({x:Math.random()*900,y:Math.random()*320,len:9+Math.random()*8,spd:6+Math.random()*4,a:0.4+Math.random()*0.4});
+
+const snowflakes=[];
+for(let i=0;i<60;i++) snowflakes.push({x:Math.random()*900,y:Math.random()*320,r:2+Math.random()*2,spd:1+Math.random()*1.5});
+
+canvas.addEventListener('click',e=>{
+  const rect=canvas.getBoundingClientRect();
+  const sx=e.clientX-rect.left;
+  const sy=e.clientY-rect.top;
+  const nx=(sx/rect.width)*W_;
+  const ny=(sy/rect.height)*H_;
+  if(ny<H_*0.65){
+    clouds.push(mkCloud(nx,ny,0.01));
+    S.clouds=Math.min(100,S.clouds+8);
+    flashHint("Great! A cloud appeared! ☁️");
+  }
+});
+
+function flashHint(t){const h=document.getElementById('hint');h.textContent=t;h.style.opacity='1';setTimeout(()=>h.style.opacity='0.7',1800);}
+
+function lerp(a,b,t){return a+(b-a)*t}
+function lerpRGB(c1,c2,t){return[Math.round(lerp(c1[0],c2[0],t)),Math.round(lerp(c1[1],c2[1],t)),Math.round(lerp(c1[2],c2[2],t))]}
+
+function skyColor(){
+  const cd=S.clouds/100,rl=S.rain/100;
+  let c=lerpRGB([95,185,255],[165,175,185],Math.min(1,cd*1.4));
+  c=lerpRGB(c,[55,68,90],Math.min(1,rl*1.5));
+  return`rgb(${c[0]},${c[1]},${c[2]})`;
+}
+
+function update(){
+  S.tick++;
+  if(S.sunOn) S.temp=Math.min(100,S.temp+0.22);
+  else S.temp=Math.max(0,S.temp-0.14);
+  if(S.rain>20) S.temp=Math.max(0,S.temp-0.09);
+
+  if(S.sunOn&&S.temp>25) S.clouds=Math.min(100,S.clouds+0.18);
+  else if(!S.sunOn) S.clouds=Math.max(0,S.clouds-0.13);
+  if(S.rain>25) S.clouds=Math.max(0,S.clouds-0.15);
+
+  if(S.clouds>58) S.rain=Math.min(100,S.rain+0.55);
+  else S.rain=Math.max(0,S.rain-0.65);
+
+  S.wind=Math.max(0.5,S.wind*0.998);
+
+  const tgt=Math.floor(S.clouds/15)+2;
+  if(clouds.length<tgt) clouds.push(mkCloud(Math.random()*W_,-20,0.01));
+  const maxSz=0.1+S.clouds*0.0022;
+  for(let c of clouds){
+    c.tsz=0.04+(S.clouds/100)*maxSz;
+    c.sz+=((c.tsz-c.sz)*0.018);
+    c.alpha=Math.min(0.96,c.sz*6*(0.4+S.clouds*0.006));
+    c.x+=(S.wind*c.spd*0.55);
+    if(c.x>W_+200) c.x=-200;
+  }
+
+  if(S.rain>5){
+    for(let r of drops){
+      r.y+=r.spd;r.x-=S.wind*0.2;
+      if(r.y>H_){r.y=-10;r.x=Math.random()*W_;}
+      if(r.x<0) r.x=W_;
+    }
+  }
+
+  if(S.temp<15&&S.rain>5){
+    for(let f of snowflakes){
+      f.y+=f.spd;f.x+=Math.sin(S.tick*0.02+f.r)*0.5;
+      if(f.y>H_){f.y=-5;f.x=Math.random()*W_;}
+    }
+  }
+}
+
+function draw(){
+  ctx.clearRect(0,0,W_,H_);
+  ctx.fillStyle=skyColor();
+  ctx.fillRect(0,0,W_,H_);
+
+  const groundY=H_*0.78;
+  const gc=S.rain>30?'#4e6b3e':S.temp<20?'#7b9e87':'#5ea84a';
+  ctx.fillStyle=gc;
+  ctx.beginPath();
+  ctx.moveTo(0,groundY+5);
+  ctx.bezierCurveTo(W_*0.3,groundY-10,W_*0.6,groundY+18,W_,groundY);
+  ctx.lineTo(W_,H_);ctx.lineTo(0,H_);ctx.closePath();ctx.fill();
+  ctx.fillStyle=S.rain>30?'#3d5932':S.temp<20?'#6b8e76':'#4a9438';
+  ctx.beginPath();
+  ctx.moveTo(0,groundY+18);
+  ctx.bezierCurveTo(W_*0.4,groundY+5,W_*0.7,groundY+28,W_,groundY+12);
+  ctx.lineTo(W_,H_);ctx.lineTo(0,H_);ctx.closePath();ctx.fill();
+
+  drawSun();
+  drawClouds();
+  if(S.rain>5) drawRain();
+  if(S.temp<15&&S.rain>5) drawSnow();
+  drawBirds();
+}
+
+function drawSun(){
+  if(!S.sunOn&&S.temp<15) return;
+  const a=S.sunOn?1:Math.max(0,(S.temp-15)/85);
+  const cx=W_*0.84,cy=65,R=S.sunOn?42:30;
+  ctx.save();
+  ctx.globalAlpha=a*0.15;
+  ctx.fillStyle='#FFE57F';
+  ctx.beginPath();ctx.arc(cx,cy,R+28,0,Math.PI*2);ctx.fill();
+  ctx.globalAlpha=a*0.09;
+  ctx.beginPath();ctx.arc(cx,cy,R+48,0,Math.PI*2);ctx.fill();
+  ctx.restore();
+  ctx.save();
+  ctx.globalAlpha=a*0.75;
+  ctx.strokeStyle='#FFD740';ctx.lineWidth=3;ctx.lineCap='round';
+  for(let i=0;i<12;i++){
+    const ang=(i/12)*Math.PI*2+S.tick*0.006;
+    ctx.beginPath();
+    ctx.moveTo(cx+Math.cos(ang)*(R+5),cy+Math.sin(ang)*(R+5));
+    ctx.lineTo(cx+Math.cos(ang)*(R+18+(S.sunOn?6:0)),cy+Math.sin(ang)*(R+18+(S.sunOn?6:0)));
+    ctx.stroke();
+  }
+  ctx.restore();
+  ctx.save();
+  ctx.globalAlpha=a;
+  ctx.fillStyle=S.sunOn?'#FFD740':'#FFC107';
+  ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='rgba(255,255,180,0.55)';
+  ctx.beginPath();ctx.arc(cx-R*0.25,cy-R*0.25,R*0.45,0,Math.PI*2);ctx.fill();
+  ctx.restore();
+}
+
+function drawClouds(){
+  for(let c of clouds){
+    if(c.alpha<0.03) continue;
+    const x=c.x,y=c.y,s=c.sz*W_;
+    const dk=Math.min(0.55,S.rain/100*0.7);
+    const base=Math.round(235-dk*130);
+    ctx.save();
+    ctx.globalAlpha=Math.min(0.97,c.alpha);
+    ctx.fillStyle=`rgb(${base},${base},${base+3})`;
+    const pts=[[-0.5,0.1,0.42],[0.5,0.15,0.36],[0,0,0.56],[-0.22,-0.22,0.3],[0.24,-0.18,0.27],[0,-0.25,0.22]];
+    for(let[dx,dy,r]of pts){ctx.beginPath();ctx.arc(x+dx*s,y+dy*s,r*s,0,Math.PI*2);ctx.fill();}
+    ctx.restore();
+  }
+}
+
+function drawRain(){
+  const a=Math.min(0.75,S.rain/100);
+  const maxD=Math.floor((S.rain/100)*drops.length);
+  ctx.save();ctx.strokeStyle='#90CAF9';ctx.lineWidth=1.5;ctx.lineCap='round';
+  for(let i=0;i<maxD;i++){
+    const r=drops[i];
+    ctx.globalAlpha=a*r.a;
+    ctx.beginPath();ctx.moveTo(r.x,r.y);
+    ctx.lineTo(r.x-S.wind*0.25,r.y+r.len);ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawSnow(){
+  ctx.save();ctx.fillStyle='#fff';
+  for(let f of snowflakes){
+    ctx.globalAlpha=0.7;
+    ctx.beginPath();ctx.arc(f.x,f.y,f.r,0,Math.PI*2);ctx.fill();
+  }
+  ctx.restore();
+}
+
+let birdT=0;
+function drawBirds(){
+  if(S.clouds>50||S.rain>20||!S.sunOn) return;
+  birdT+=0.012;
+  ctx.save();ctx.strokeStyle='#444';ctx.lineWidth=1.2;ctx.lineCap='round';
+  const bs=[[0.2,0.2,1],[0.35,0.15,0.8],[0.28,0.28,0.65]];
+  for(let[bx,by,sc]of bs){
+    const x=((bx*W_+S.tick*(0.3*sc))%W_);
+    const y=by*H_+(Math.sin(birdT*2+bx*10)*4);
+    ctx.globalAlpha=0.6;
+    ctx.beginPath();
+    ctx.moveTo(x-7*sc,y);
+    ctx.quadraticCurveTo(x-3*sc,y-5*sc,x,y);
+    ctx.quadraticCurveTo(x+3*sc,y-5*sc,x+7*sc,y);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+const STEPS=[
+  {dot:'cd0',lbl:'cl0',cond:s=>s.temp<40&&s.clouds<20,col:'#FFF8E1',bdr:'#F9A825'},
+  {dot:'cd1',lbl:'cl1',cond:s=>s.temp>=40&&s.clouds<40,col:'#FFECB3',bdr:'#FF8F00'},
+  {dot:'cd2',lbl:'cl2',cond:s=>s.clouds>=40&&s.rain<30,col:'#ECEFF1',bdr:'#607D8B'},
+  {dot:'cd3',lbl:'cl3',cond:s=>s.rain>=30,col:'#E3F2FD',bdr:'#1976D2'},
+  {dot:'cd4',lbl:'cl4',cond:s=>!s.sunOn&&s.temp<25&&s.rain<20,col:'#E8F5E9',bdr:'#388E3C'},
+];
+
+function getExplain(){
+  if(S.rain>=30) return "Rain is falling! 🌧️\nThe heavy clouds are letting go of all that water. As rain falls, the ground cools down and the clouds slowly shrink.";
+  if(S.clouds>=40) return "Clouds are growing! ☁️\nThe warm air is rising and turning into big puffy clouds. If they get heavy enough... it will rain!";
+  if(S.temp>=40&&S.sunOn) return "Getting warm! 🌡️\nThe sun is heating up the air. Warm air rises and starts making clouds. Keep the sun on to see what happens!";
+  if(!S.sunOn&&S.temp<25) return "Cooling down! ❄️\nWithout the sun, everything is getting cooler. The clouds are shrinking and the sky is clearing up.";
+  if(S.sunOn) return "Sunny day! ☀️\nThe sun warms up the air. Click the sky to add clouds, or keep waiting — clouds will form on their own!";
+  return "Calm and quiet. 🌿\nNo sun, no rain. The weather is peaceful. Turn the sun back on to start the cycle again!";
+}
+
+function updateUI(){
+  document.getElementById('m-temp').style.width=Math.round(S.temp)+'%';
+  document.getElementById('m-temp').style.background=S.temp>70?'#E53935':S.temp>40?'#F9A825':'#42A5F5';
+  document.getElementById('m-cloud').style.width=Math.round(S.clouds)+'%';
+  document.getElementById('m-rain').style.width=Math.round(S.rain)+'%';
+  document.getElementById('m-wind').style.width=Math.round(S.wind*10)+'%';
+
+  const ex=getExplain();
+  const el=document.getElementById('explain');
+  if(el.dataset.last!==ex){el.textContent=ex;el.dataset.last=ex;}
+
+  let badge='☀️ Sunny!';
+  if(S.rain>35) badge='🌧️ Raining!';
+  else if(S.clouds>55) badge='⛅ Clouds forming!';
+  else if(S.clouds>25) badge='🌥️ Getting cloudy!';
+  else if(!S.sunOn&&S.temp<20) badge='❄️ Cooling down!';
+  const bd=document.getElementById('badge');
+  if(bd.dataset.last!==badge){bd.textContent=badge;bd.dataset.last=badge;}
+
+  for(let i=0;i<STEPS.length;i++){
+    const st=STEPS[i];
+    const on=st.cond(S);
+    const dot=document.getElementById(st.dot);
+    const lbl=document.getElementById(st.lbl);
+    dot.classList.toggle('active',on);
+    lbl.classList.toggle('active',on);
+    if(on){dot.style.background=st.col;dot.style.borderColor=st.bdr;}
+    else{dot.style.background='#f5f5f5';dot.style.borderColor='#ddd';}
+  }
+}
+
+function loop(){
+  update();draw();updateUI();
+  requestAnimationFrame(loop);
+}
+
+window.W={
+  toggleSun(){
+    S.sunOn=!S.sunOn;
+    const b=document.getElementById('btn-sun');
+    if(S.sunOn){b.textContent='☀️ Sun ON';b.className='btn btn-sun';}
+    else{b.textContent='☁️ Sun OFF';b.className='btn btn-sun off';}
+    flashHint(S.sunOn?'You turned on the sun! 🌞':'You turned off the sun! 🌑');
+  },
+  addWind(){
+    S.wind=Math.min(10,S.wind+3);
+    flashHint('Whoosh! The wind is blowing! 💨');
+  },
+  coolDown(){
+    S.temp=Math.max(0,S.temp-30);S.sunOn=false;
+    const b=document.getElementById('btn-sun');
+    b.textContent='☁️ Sun OFF';b.className='btn btn-sun off';
+    flashHint('Brrrr! Everything is cooling down! ❄️');
+  },
+  reset(){
+    S.temp=60;S.clouds=5;S.rain=0;S.wind=2;S.sunOn=true;S.tick=0;
+    clouds.length=0;
+    for(let i=0;i<6;i++) clouds.push(mkCloud(Math.random()*W_,45+Math.random()*90,0.04+Math.random()*0.06));
+    const b=document.getElementById('btn-sun');
+    b.textContent='☀️ Sun ON';b.className='btn btn-sun';
+    flashHint('All reset! Let\'s start again! 🌈');
+  }
+};
+
+loop();
+flashHint('Click anywhere in the sky to add clouds! ☁️');
+})();
+</script>

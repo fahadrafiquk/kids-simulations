@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Color Mixing Lab</title>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #eef2f3;
+    text-align: center;
+  }
+  h1 { margin: 20px; }
+
+  #lab {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 40px;
+    margin-top: 30px;
+    flex-wrap: wrap;
+  }
+
+  .unit { text-align: center; }
+
+  .beaker {
+    width: 120px;
+    height: 200px;
+    border: 3px solid #333;
+    border-radius: 12px;
+    background: white;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .liquid {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 0%;
+    transition: height 0.4s ease, background-color 0.3s ease;
+  }
+
+  button {
+    margin-top: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    border-radius: 6px;
+    border: 1px solid #aaa;
+    background: #fff;
+  }
+  button:hover { background: #f0f0f0; }
+
+  #resultLabel {
+    margin-top: 24px;
+    font-size: 20px;
+    font-weight: bold;
+  }
+
+  #poeticLabel {
+    font-size: 13px;
+    color: #777;
+    font-style: italic;
+    margin-top: 4px;
+  }
+
+  #pourCount {
+    font-size: 13px;
+    color: #888;
+    margin-top: 6px;
+  }
+
+  #swatch {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid #333;
+    vertical-align: middle;
+    margin-right: 10px;
+    background: white;
+    transition: background 0.3s ease;
+  }
+</style>
+</head>
+<body>
+
+<h1>Color Mixing Lab</h1>
+
+<div id="lab">
+  <div class="unit">
+    <div class="beaker">
+      <div class="liquid" id="liqRed" style="background:rgb(220,50,50); height:100%"></div>
+    </div>
+    <button onclick="pour('red')">Pour Red</button>
+  </div>
+
+  <div class="unit">
+    <div class="beaker">
+      <div class="liquid" id="liqBlue" style="background:rgb(50,80,220); height:100%"></div>
+    </div>
+    <button onclick="pour('blue')">Pour Blue</button>
+  </div>
+
+  <div class="unit">
+    <div class="beaker">
+      <div class="liquid" id="liqYellow" style="background:rgb(220,200,0); height:100%"></div>
+    </div>
+    <button onclick="pour('yellow')">Pour Yellow</button>
+  </div>
+
+  <div class="unit">
+    <div class="beaker" id="mixBeaker">
+      <div class="liquid" id="mixLiquid"></div>
+    </div>
+    <button onclick="resetMix()">Reset</button>
+  </div>
+</div>
+
+<div id="resultLabel"><span id="swatch"></span>Result: none</div>
+<div id="poeticLabel"></div>
+<div id="pourCount"></div>
+
+<script>
+let contents = [];
+
+const PIGMENTS = {
+  red:    '#dc3232',
+  blue:   '#3250dc',
+  yellow: '#dcc832',
+};
+
+// ── Core color engine ──────────────────────────────────────────────────────
+
+function hslToRgb(h, s, l) {
+  s /= 100; l /= 100;
+  const k = n => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  return [Math.round(f(0)*255), Math.round(f(8)*255), Math.round(f(4)*255)];
+}
+
+function rgbToHsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r,g,b), min = Math.min(r,g,b);
+  let h, s, l = (max + min) / 2;
+  if (max === min) {
+    h = s = 0;
+  } else {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
+    }
+  }
+  return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)];
+}
+
+function hexToRgb(hex) {
+  const c = hex.replace('#','');
+  return [parseInt(c.slice(0,2),16), parseInt(c.slice(2,4),16), parseInt(c.slice(4,6),16)];
+}
+
+function rgbToHex(r, g, b) {
+  return '#' + [r,g,b].map(v => Math.round(v).toString(16).padStart(2,'0')).join('');
+}
+
+function mixColors(hexA, hexB) {
+  const [h1,s1,l1] = rgbToHsl(...hexToRgb(hexA));
+  const [h2,s2,l2] = rgbToHsl(...hexToRgb(hexB));
+  let dh = h2 - h1;
+  if (dh > 180) dh -= 360;
+  if (dh < -180) dh += 360;
+  const h = (h1 + dh / 2 + 360) % 360;
+  const s = (s1 + s2) / 2;
+  const l = (l1 + l2) / 2;
+  return rgbToHex(...hslToRgb(Math.round(h), Math.round(s), Math.round(l)));
+}
+
+// ── Poetic name from HSL ───────────────────────────────────────────────────
+
+function poeticName(hex) {
+  const [h, s, l] = rgbToHsl(...hexToRgb(hex));
+  if (s < 8)  return l > 70 ? 'white fog' : l < 30 ? 'deep shadow' : 'stone gray';
+  const names = [
+    [0,15,'rose blush'],[15,30,'ember red'],[30,45,'burnt sienna'],
+    [45,60,'warm amber'],[60,75,'golden hour'],[75,90,'olive dusk'],
+    [90,120,'spring leaf'],[120,150,'forest green'],[150,180,'ocean mint'],
+    [180,210,'teal mist'],[210,240,'sky cerulean'],[240,270,'cobalt blue'],
+    [270,300,'iris violet'],[300,330,'wild lavender'],[330,360,'rose blush'],
+  ];
+  const base = (names.find(([lo,hi]) => h >= lo && h < hi) || [])[2] || 'mixed hue';
+  if (s < 30) return 'muted ' + base;
+  if (l > 70) return 'pale ' + base;
+  if (l < 35) return 'deep ' + base;
+  return base;
+}
+
+// ── App logic ──────────────────────────────────────────────────────────────
+
+function pour(color) {
+  contents.push(color);
+  updateMix();
+}
+
+function updateMix() {
+  const mixLiquid = document.getElementById('mixLiquid');
+  const swatch    = document.getElementById('swatch');
+  const label     = document.getElementById('resultLabel');
+  const poetic    = document.getElementById('poeticLabel');
+  const pourCount = document.getElementById('pourCount');
+
+  const hex = getMixedColor(contents);
+
+  mixLiquid.style.background = hex;
+  mixLiquid.style.height = Math.min(100, contents.length * 20) + '%';
+  swatch.style.background = hex;
+
+  label.innerHTML = '<span id="swatch" style="display:inline-block;width:32px;height:32px;border-radius:50%;border:2px solid #333;vertical-align:middle;margin-right:10px;background:' + hex + ';transition:background 0.3s ease;"></span>Result: ' + poeticName(hex);
+  poetic.textContent = hex;
+
+  const counts = {};
+  contents.forEach(c => counts[c] = (counts[c] || 0) + 1);
+  pourCount.textContent = Object.entries(counts).map(([c,n]) => n + '× ' + c).join('  +  ');
+}
+
+function getMixedColor(list) {
+  if (list.length === 0) return '#ffffff';
+  // fold all pours into a running mix using the HSL midpoint engine
+  let current = PIGMENTS[list[0]];
+  for (let i = 1; i < list.length; i++) {
+    current = mixColors(current, PIGMENTS[list[i]]);
+  }
+  return current;
+}
+
+function resetMix() {
+  contents = [];
+  const mixLiquid = document.getElementById('mixLiquid');
+  mixLiquid.style.height = '0%';
+  mixLiquid.style.background = 'white';
+  document.getElementById('resultLabel').innerHTML = '<span id="swatch" style="display:inline-block;width:32px;height:32px;border-radius:50%;border:2px solid #333;vertical-align:middle;margin-right:10px;background:white;transition:background 0.3s ease;"></span>Result: none';
+  document.getElementById('poeticLabel').textContent = '';
+  document.getElementById('pourCount').textContent = '';
+}
+</script>
+
+</body>
+</html>

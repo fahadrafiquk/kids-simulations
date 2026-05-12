@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>🌿 Wild World — Ecosystem Adventure</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sky: #87CEEB;
+    --grass: #5DBB63;
+    --grass2: #4CAF50;
+    --dirt: #8B6914;
+    --rabbit: #F4A261;
+    --rabbit-dark: #E76F51;
+    --fox: #E63946;
+    --fox-dark: #9B2335;
+    --wolf: #6A4C93;
+    --wolf-dark: #3D2B6B;
+    --food: #2DC653;
+    --water: #4CC9F0;
+    --panel: rgba(255,255,255,0.92);
+    --shadow: 0 4px 24px rgba(0,0,0,0.13);
+    --radius: 20px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: linear-gradient(160deg, #e0f7fa 0%, #b2ebf2 40%, #e8f5e9 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 12px;
+  }
+
+  header h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2.4rem;
+    color: #2d6a4f;
+    text-shadow: 3px 3px 0 #b7e4c7, 0 0 30px rgba(45,106,79,0.15);
+    letter-spacing: 1px;
+  }
+
+  header p {
+    color: #52796f;
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-top: 2px;
+  }
+
+  .main-layout {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    max-width: 1080px;
+    width: 100%;
+  }
+
+  /* ── Canvas ── */
+  #worldWrap {
+    position: relative;
+    flex: 1;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.18), 0 0 0 4px #fff;
+  }
+
+  #world {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  /* ── Side Panel ── */
+  .side-panel {
+    width: 220px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .card {
+    background: var(--panel);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 14px 16px;
+  }
+
+  .card-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    color: #2d6a4f;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* Population bars */
+  .pop-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .pop-emoji { font-size: 1.3rem; width: 28px; text-align: center; }
+
+  .pop-bar-wrap {
+    flex: 1;
+    background: #e8f4ea;
+    border-radius: 8px;
+    height: 14px;
+    overflow: hidden;
+  }
+
+  .pop-bar {
+    height: 100%;
+    border-radius: 8px;
+    transition: width 0.4s ease;
+  }
+
+  .pop-count {
+    font-weight: 800;
+    font-size: 0.85rem;
+    color: #333;
+    width: 24px;
+    text-align: right;
+  }
+
+  /* Controls */
+  .btn-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  button {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    border: none;
+    border-radius: 12px;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.15);
+    flex: 1;
+  }
+
+  button:active { transform: translateY(2px); box-shadow: none; }
+
+  .btn-start  { background: #52b788; color: #fff; }
+  .btn-pause  { background: #f4a261; color: #fff; }
+  .btn-reset  { background: #e76f51; color: #fff; }
+
+  .slider-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .slider-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #52796f;
+    margin-bottom: 2px;
+  }
+
+  input[type=range] {
+    width: 100%;
+    accent-color: #52b788;
+    cursor: pointer;
+  }
+
+  /* Log */
+  #log {
+    background: var(--panel);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 10px 12px;
+    font-size: 0.8rem;
+    color: #555;
+    height: 130px;
+    overflow-y: auto;
+    line-height: 1.7;
+  }
+
+  #log .entry { display: flex; gap: 6px; align-items: flex-start; }
+  #log .entry .icon { flex-shrink: 0; }
+
+  /* Generation badge */
+  #genBadge {
+    background: linear-gradient(135deg, #2d6a4f, #52b788);
+    color: #fff;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    border-radius: 12px;
+    padding: 8px 12px;
+    text-align: center;
+    box-shadow: var(--shadow);
+  }
+
+  /* Info tooltip legend */
+  .legend { font-size: 0.78rem; color: #666; line-height: 1.9; }
+  .legend span { margin-right: 4px; }
+
+  /* Season indicator */
+  #seasonBadge {
+    text-align: center;
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.95rem;
+    padding: 6px 10px;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    transition: background 0.8s, color 0.8s;
+  }
+
+  /* Responsive */
+  @media (max-width: 700px) {
+    .main-layout { flex-direction: column; }
+    .side-panel { width: 100%; flex-direction: row; flex-wrap: wrap; }
+    .card { flex: 1 1 45%; }
+    #log { height: 80px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🌿 Wild World</h1>
+  <p>Watch nature's food chain come alive!</p>
+</header>
+
+<div class="main-layout">
+
+  <div id="worldWrap">
+    <canvas id="world" width="700" height="480"></canvas>
+  </div>
+
+  <div class="side-panel">
+
+    <!-- Season -->
+    <div id="seasonBadge">🌸 Spring · Day 1</div>
+
+    <!-- Population -->
+    <div class="card">
+      <div class="card-title">🐾 Population</div>
+      <div class="pop-row">
+        <span class="pop-emoji">🐇</span>
+        <div class="pop-bar-wrap"><div class="pop-bar" id="barRabbit" style="background:#F4A261;width:50%"></div></div>
+        <span class="pop-count" id="cntRabbit">0</span>
+      </div>
+      <div class="pop-row">
+        <span class="pop-emoji">🦊</span>
+        <div class="pop-bar-wrap"><div class="pop-bar" id="barFox" style="background:#E63946;width:30%"></div></div>
+        <span class="pop-count" id="cntFox">0</span>
+      </div>
+      <div class="pop-row">
+        <span class="pop-emoji">🐺</span>
+        <div class="pop-bar-wrap"><div class="pop-bar" id="barWolf" style="background:#6A4C93;width:10%"></div></div>
+        <span class="pop-count" id="cntWolf">0</span>
+      </div>
+      <div class="pop-row">
+        <span class="pop-emoji">🌿</span>
+        <div class="pop-bar-wrap"><div class="pop-bar" id="barFood" style="background:#2DC653;width:80%"></div></div>
+        <span class="pop-count" id="cntFood">0</span>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="card">
+      <div class="card-title">🎮 Controls</div>
+      <div class="btn-row" style="margin-bottom:10px">
+        <button class="btn-start" onclick="startSim()">▶ Start</button>
+        <button class="btn-pause" onclick="pauseSim()">⏸ Pause</button>
+        <button class="btn-reset" onclick="resetSim()">↺ Reset</button>
+      </div>
+      <div class="slider-row">
+        <div>
+          <div class="slider-label"><span>⚡ Speed</span><span id="valSpeed">5</span></div>
+          <input type="range" id="speedSlider" min="1" max="10" value="5" oninput="document.getElementById('valSpeed').textContent=this.value">
+        </div>
+      </div>
+    </div>
+
+    <!-- Starting Animals -->
+    <div class="card">
+      <div class="card-title">🐣 Starting Animals</div>
+      <div class="note" style="font-size:0.74rem;color:#888;margin-bottom:8px;font-style:italic">Set before pressing Start</div>
+      <div class="slider-row">
+        <div>
+          <div class="slider-label" style="color:#c77b3a"><span>🐇 Rabbits</span><span id="valRabbits">15</span></div>
+          <input type="range" id="sliderRabbits" min="2" max="40" value="15" oninput="document.getElementById('valRabbits').textContent=this.value" style="accent-color:#F4A261">
+        </div>
+        <div>
+          <div class="slider-label" style="color:#b02030"><span>🦊 Foxes</span><span id="valFoxes">6</span></div>
+          <input type="range" id="sliderFoxes" min="1" max="20" value="6" oninput="document.getElementById('valFoxes').textContent=this.value" style="accent-color:#E63946">
+        </div>
+        <div>
+          <div class="slider-label" style="color:#5a3e8a"><span>🐺 Wolves</span><span id="valWolves">3</span></div>
+          <input type="range" id="sliderWolves" min="0" max="10" value="3" oninput="document.getElementById('valWolves').textContent=this.value" style="accent-color:#6A4C93">
+        </div>
+      </div>
+    </div>
+
+    <!-- Gen badge -->
+    <div id="genBadge">🍼 Generation 0</div>
+
+    <!-- Legend -->
+    <div class="card">
+      <div class="card-title">📖 Guide</div>
+      <div class="legend">
+        <div><span>🐇</span> Rabbits eat grass</div>
+        <div><span>🦊</span> Foxes hunt rabbits</div>
+        <div><span>🐺</span> Wolves hunt foxes & rabbits</div>
+        <div><span>🌿</span> Grass regrows over time</div>
+        <div><span>💧</span> All animals need water</div>
+        <div><span>❤️</span> Bar = hunger level</div>
+        <div><span>🦠</span> Animals can get sick</div>
+        <div><span>👴</span> Elders slow &amp; grey</div>
+        <div><span>❄️</span> Cold kills weak animals</div>
+      </div>
+    </div>
+
+    <!-- Log -->
+    <div id="log"><div class="entry"><span class="icon">🌍</span><span>Ecosystem ready! Press Start.</span></div></div>
+
+  </div>
+</div>
+
+<script>
+// ── Canvas setup ─────────────────────────────────────────────────────────
+const canvas = document.getElementById('world');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+// ── State ─────────────────────────────────────────────────────────────────
+let animals = [], food = [], waterSpots = [], generation = 0;
+let running = false, rafId = null, lastTime = 0, tick = 0, day = 0;
+
+// Season system
+const SEASONS = [
+  { name: '🌸 Spring', bg1: '#a8d8a8', bg2: '#c8e6a0', foodRate: 25, icon: '🌸' },
+  { name: '☀️ Summer', bg1: '#b5d86b', bg2: '#d4ed7a', foodRate: 40, icon: '☀️' },
+  { name: '🍂 Autumn', bg1: '#d4a574', bg2: '#e8c07a', foodRate: 60, icon: '🍂' },
+  { name: '❄️ Winter', bg1: '#d5e8f0', bg2: '#eaf4f9', foodRate: 120, icon: '❄️' },
+];
+let seasonIdx = 0;
+
+// Terrain cells (static decorations)
+const trees = [], bushes = [], rocks = [];
+
+// ── Utility ────────────────────────────────────────────────────────────────
+function rand(min, max) { return min + Math.random() * (max - min); }
+function randInt(min, max) { return Math.floor(rand(min, max + 1)); }
+function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+// ── Animal factory ─────────────────────────────────────────────────────────
+const SPECS = {
+  rabbit: { color: '#F4A261', dark: '#E76F51', size: [5,8], speed: [1.0,2.0], hungerMax: 100, thirstMax: 120, ageMax: 1400, reproRate: [250,450], sight: 90, emoji: '🐇' },
+  fox:    { color: '#E63946', dark: '#9B2335', size: [7,10], speed: [1.3,2.3], hungerMax: 130, thirstMax: 140, ageMax: 1600, reproRate: [350,600], sight: 110, emoji: '🦊' },
+  wolf:   { color: '#6A4C93', dark: '#3D2B6B', size: [9,13], speed: [1.1,1.9], hungerMax: 160, thirstMax: 160, ageMax: 2000, reproRate: [500,800], sight: 130, emoji: '🐺' },
+};
+
+function makeAnimal(type, x, y, opts) {
+  const sp = SPECS[type];
+  return {
+    type,
+    x: x ?? rand(30, W - 30),
+    y: y ?? rand(30, H - 30),
+    vx: rand(-1, 1), vy: rand(-1, 1),
+    speed:  opts?.speed ?? rand(sp.speed[0], sp.speed[1]),
+    size:   opts?.size  ?? rand(sp.size[0],  sp.size[1]),
+    hunger: rand(0, 20),
+    thirst: rand(0, 20),
+    age:    0,
+    reproTimer: rand(0, sp.reproRate[1]),
+    alive: true,
+    state: 'wander',
+    stateTimer: 0,
+    trail: [],
+    wobble: rand(0, Math.PI * 2),
+    // Natural causes
+    sick: false,           // disease flag
+    sickTimer: 0,          // how long sick
+    injured: false,        // injury flag
+    injuredTimer: 0,       // injury duration
+    immunityTimer: 0,      // post-sickness immunity
+  };
+}
+
+function makeFood(x, y) {
+  return { x: x ?? rand(15, W-15), y: y ?? rand(15, H-15), r: rand(3,5), grow: 0 };
+}
+
+function makeWater() {
+  return { x: rand(50, W-50), y: rand(50, H-50), r: rand(12, 22) };
+}
+
+// ── Terrain generation ─────────────────────────────────────────────────────
+function genTerrain() {
+  trees.length = 0; bushes.length = 0; rocks.length = 0;
+  for (let i = 0; i < 14; i++) trees.push({ x: rand(20, W-20), y: rand(20, H-20), r: rand(10,18), sway: rand(0, Math.PI*2) });
+  for (let i = 0; i < 18; i++) bushes.push({ x: rand(10, W-10), y: rand(10, H-10), r: rand(6,11) });
+  for (let i = 0; i < 8; i++) rocks.push({ x: rand(10, W-10), y: rand(10, H-10), r: rand(5,10), angle: rand(0, Math.PI) });
+}
+
+// ── Spawn ─────────────────────────────────────────────────────────────────
+function spawnInitial() {
+  const rabbits = parseInt(document.getElementById('sliderRabbits').value);
+  const foxes   = parseInt(document.getElementById('sliderFoxes').value);
+  const wolves  = parseInt(document.getElementById('sliderWolves').value);
+  for (let i = 0; i < rabbits; i++) animals.push(makeAnimal('rabbit'));
+  for (let i = 0; i < foxes;   i++) animals.push(makeAnimal('fox'));
+  for (let i = 0; i < wolves;  i++) animals.push(makeAnimal('wolf'));
+  for (let i = 0; i < 40; i++) food.push(makeFood());
+  for (let i = 0; i < 6;  i++) waterSpots.push(makeWater());
+  genTerrain();
+}
+
+// ── Steering ──────────────────────────────────────────────────────────────
+function steer(a, tx, ty, strength) {
+  const dx = tx - a.x, dy = ty - a.y;
+  const d = Math.hypot(dx, dy) || 1;
+  a.vx += (dx / d) * strength;
+  a.vy += (dy / d) * strength;
+}
+
+function flee(a, tx, ty, strength) {
+  steer(a, 2*a.x - tx, 2*a.y - ty, strength);
+}
+
+function wander(a) {
+  a.vx += rand(-0.4, 0.4);
+  a.vy += rand(-0.4, 0.4);
+}
+
+function normalizeVel(a) {
+  const mag = Math.hypot(a.vx, a.vy) || 1;
+  a.vx = (a.vx / mag) * a.speed;
+  a.vy = (a.vy / mag) * a.speed;
+}
+
+function nearest(a, list, maxDist) {
+  let best = null, bd = maxDist;
+  for (const item of list) {
+    if (item === a) continue;
+    const d = dist(a, item);
+    if (d < bd) { bd = d; best = item; }
+  }
+  return { item: best, d: bd };
+}
+
+function nearestWater(a, maxDist) {
+  let best = null, bd = maxDist;
+  for (const w of waterSpots) {
+    const d = dist(a, w);
+    if (d < bd) { bd = d; best = w; }
+  }
+  return best;
+}
+
+// ── AI Update ─────────────────────────────────────────────────────────────
+function updateAnimal(a) {
+  const sp = SPECS[a.type];
+  const season = SEASONS[seasonIdx];
+
+  // Aging & needs
+  const hungerRate = a.type === 'wolf' ? 0.07 : (a.type === 'fox' ? 0.09 : 0.10);
+  a.hunger += hungerRate * (season.name.includes('Winter') ? 1.35 : 1);
+  a.thirst += 0.06;
+  a.age++;
+  a.reproTimer--;
+  a.wobble += 0.1;
+
+  // ── Natural Causes ────────────────────────────────────────────────────────
+  const sp2 = SPECS[a.type];
+  const lifespan = sp2.ageMax;
+  const ageFrac  = a.age / lifespan;   // 0..1
+
+  // 1) Old age: speed decays, hunger climbs faster after 70% of lifespan
+  if (ageFrac > 0.70) {
+    const penalty = (ageFrac - 0.70) / 0.30;  // 0..1
+    a.hunger += hungerRate * penalty * 1.2;    // elderly eat more
+    a.speed   = sp2.speed[0] * (1 - penalty * 0.5);  // slow down up to 50%
+  }
+
+  // 2) Disease: random chance to fall sick (lower near water; higher in winter)
+  if (!a.sick && a.immunityTimer <= 0) {
+    const baseChance = a.type === 'rabbit' ? 0.00015 : 0.00010;
+    const winterMult = season.name.includes('Winter') ? 2.5 : 1;
+    const crowding   = animals.filter(x => x.alive && x.type === a.type && dist(x, a) < 30).length;
+    const crowdMult  = 1 + crowding * 0.08;
+    if (Math.random() < baseChance * winterMult * crowdMult) {
+      a.sick = true;
+      a.sickTimer = randInt(200, 500);
+      log(cap(a.type) + ' got sick! 🤧', '🦠');
+    }
+  }
+
+  if (a.sick) {
+    a.sickTimer--;
+    a.hunger += 0.12;   // sick animals lose appetite control
+    a.thirst += 0.08;
+    a.speed  *= 0.97;   // progressive slow-down (reset each tick from base, so compound)
+    if (a.sickTimer <= 0) {
+      a.sick = false;
+      a.immunityTimer = randInt(400, 800);  // recovered — immune for a while
+      log(cap(a.type) + ' recovered! 💪', '✅');
+    }
+    // Can die of illness if sickTimer ran long and hunger/thirst spiked
+  }
+  if (a.immunityTimer > 0) a.immunityTimer--;
+
+  // 3) Injury: random chance (higher when predators are nearby)
+  if (!a.injured && Math.random() < 0.00008) {
+    a.injured = true;
+    a.injuredTimer = randInt(150, 350);
+    log(cap(a.type) + ' got injured! 🩹', '🩹');
+  }
+
+  if (a.injured) {
+    a.injuredTimer--;
+    a.speed *= 0.98;    // limp
+    a.hunger += 0.05;   // extra energy to heal
+    if (a.injuredTimer <= 0) {
+      a.injured = false;
+      log(cap(a.type) + ' healed up! 🐾', '💚');
+    }
+  }
+
+  // 4) Winter cold snap: weak / elderly / sick animals can die suddenly
+  if (season.name.includes('Winter') && Math.random() < 0.00004 * (1 + ageFrac)) {
+    if (a.sick || a.injured || ageFrac > 0.85 || a.hunger > sp2.hungerMax * 0.6) {
+      a.alive = false;
+      log(cap(a.type) + ' froze in the cold. ❄️', '❄️');
+    }
+  }
+
+  // Track trail
+  a.trail.push({ x: a.x, y: a.y });
+  if (a.trail.length > 8) a.trail.shift();
+
+  const sight = sp.sight;
+  const rabbitsAlive  = animals.filter(x => x.type === 'rabbit' && x.alive);
+  const foxesAlive    = animals.filter(x => x.type === 'fox'    && x.alive);
+  const wolvesAlive   = animals.filter(x => x.type === 'wolf'   && x.alive);
+
+  // ── RABBIT AI ──
+  if (a.type === 'rabbit') {
+    // Priority 1: flee any predator (wolf or fox)
+    const nearFox  = nearest(a, foxesAlive,  sight);
+    const nearWolf = nearest(a, wolvesAlive, sight + 20);
+    const threat = nearWolf.item && nearWolf.d < nearFox.d ? nearWolf : nearFox;
+
+    if (threat.item) {
+      flee(a, threat.item.x, threat.item.y, 2.0);
+      a.state = 'flee';
+    } else if (a.thirst > 50) {
+      const w = nearestWater(a, sight * 1.5);
+      if (w) { steer(a, w.x, w.y, 1.2); a.state = 'drink'; }
+      else wander(a);
+    } else if (a.hunger > 35) {
+      const { item: f } = nearest(a, food, sight);
+      if (f) { steer(a, f.x, f.y, 1.1); a.state = 'eat'; }
+      else wander(a);
+    } else {
+      wander(a);
+      a.state = 'wander';
+    }
+
+    // Eat food
+    const { item: f } = nearest(a, food, a.size + 6);
+    if (f) {
+      a.hunger = Math.max(0, a.hunger - 45);
+      food.splice(food.indexOf(f), 1);
+    }
+    // Drink water
+    const w = nearestWater(a, a.size + 10);
+    if (w) a.thirst = Math.max(0, a.thirst - 50);
+  }
+
+  // ── FOX AI ──
+  else if (a.type === 'fox') {
+    // Priority 1: flee wolves
+    const nearWolf = nearest(a, wolvesAlive, sight);
+    if (nearWolf.item) {
+      flee(a, nearWolf.item.x, nearWolf.item.y, 1.8);
+      a.state = 'flee';
+    } else if (a.thirst > 55) {
+      const w = nearestWater(a, sight * 1.5);
+      if (w) { steer(a, w.x, w.y, 1.1); a.state = 'drink'; }
+      else wander(a);
+    } else if (a.hunger > 25) {
+      // Hunt rabbits
+      const { item: prey } = nearest(a, rabbitsAlive, sight);
+      if (prey) { steer(a, prey.x, prey.y, 1.6); a.state = 'hunt'; }
+      else { wander(a); a.state = 'wander'; }
+    } else {
+      wander(a);
+      a.state = 'wander';
+    }
+
+    // Catch rabbit
+    const { item: prey } = nearest(a, rabbitsAlive, a.size + (rabbitsAlive[0]?.size ?? 6));
+    if (prey && dist(a, prey) < a.size + prey.size) {
+      prey.alive = false;
+      a.hunger = Math.max(0, a.hunger - 65);
+      log('Fox caught a rabbit! 🦊💨🐇', '🦊');
+    }
+    const w = nearestWater(a, a.size + 10);
+    if (w) a.thirst = Math.max(0, a.thirst - 50);
+  }
+
+  // ── WOLF AI ──
+  else if (a.type === 'wolf') {
+    if (a.thirst > 60) {
+      const w = nearestWater(a, sight * 1.5);
+      if (w) { steer(a, w.x, w.y, 1.0); a.state = 'drink'; }
+      else wander(a);
+    } else if (a.hunger > 20) {
+      // Wolves prefer foxes, but will eat rabbits too
+      const { item: foxPrey, d: fd } = nearest(a, foxesAlive, sight);
+      const { item: rabbitPrey, d: rd } = nearest(a, rabbitsAlive, sight * 0.8);
+      let target = null;
+      if (foxPrey && (!rabbitPrey || fd < rd * 1.3)) target = foxPrey;
+      else if (rabbitPrey) target = rabbitPrey;
+
+      if (target) { steer(a, target.x, target.y, 1.3); a.state = 'hunt'; }
+      else { wander(a); a.state = 'wander'; }
+    } else {
+      wander(a);
+      a.state = 'wander';
+    }
+
+    // Catch fox
+    const { item: foxPrey } = nearest(a, foxesAlive, a.size + 10);
+    if (foxPrey && dist(a, foxPrey) < a.size + foxPrey.size) {
+      foxPrey.alive = false;
+      a.hunger = Math.max(0, a.hunger - 80);
+      log('Wolf caught a fox! 🐺💨🦊', '🐺');
+    }
+    // Catch rabbit (secondary)
+    const { item: rabbitPrey } = nearest(a, rabbitsAlive, a.size + 8);
+    if (rabbitPrey && dist(a, rabbitPrey) < a.size + rabbitPrey.size && a.hunger > 40) {
+      rabbitPrey.alive = false;
+      a.hunger = Math.max(0, a.hunger - 55);
+      log('Wolf caught a rabbit! 🐺💨🐇', '🐺');
+    }
+    const w = nearestWater(a, a.size + 12);
+    if (w) a.thirst = Math.max(0, a.thirst - 50);
+  }
+
+  // ── Movement ──
+  normalizeVel(a);
+  a.x = clamp(a.x + a.vx, a.size, W - a.size);
+  a.y = clamp(a.y + a.vy, a.size, H - a.size);
+  if (a.x <= a.size || a.x >= W - a.size) a.vx *= -1;
+  if (a.y <= a.size || a.y >= H - a.size) a.vy *= -1;
+
+  // ── Death conditions ──
+  if (!a.alive) return;  // already killed by cold snap above
+  if (a.hunger >= sp.hungerMax) { a.alive = false; log(sp.emoji + ' ' + cap(a.type) + ' starved.', '💀'); }
+  if (a.thirst >= sp.thirstMax) { a.alive = false; log(sp.emoji + ' ' + cap(a.type) + ' died of thirst.', '💧'); }
+  if (a.age >= sp.ageMax)       { a.alive = false; log(sp.emoji + ' ' + cap(a.type) + ' died peacefully of old age.', '👴'); }
+
+  // ── Reproduction ──
+  if (a.reproTimer <= 0 && a.hunger < sp.hungerMax * 0.5 && a.thirst < sp.thirstMax * 0.5 && a.alive) {
+    const sameType = animals.filter(x => x.type === a.type && x !== a && x.alive);
+    const { item: partner } = nearest(a, sameType, 35);
+    if (partner) {
+      generation++;
+      const child = makeAnimal(a.type, a.x + rand(-12,12), a.y + rand(-12,12), {
+        speed: clamp((a.speed + partner.speed) / 2 + rand(-0.1, 0.1), sp.speed[0]*0.8, sp.speed[1]*1.2),
+        size:  clamp((a.size  + partner.size)  / 2 + rand(-0.5, 0.5), sp.size[0]*0.9,  sp.size[1]*1.1),
+      });
+      animals.push(child);
+      a.reproTimer = rand(sp.reproRate[0], sp.reproRate[1]);
+      log('Baby ' + cap(a.type) + ' born! 🍼 (Gen ' + generation + ')', sp.emoji);
+    } else {
+      a.reproTimer = 100;
+    }
+  }
+}
+
+function cap(s) { return s[0].toUpperCase() + s.slice(1); }
+
+// ── Logging ───────────────────────────────────────────────────────────────
+const logEl = document.getElementById('log');
+function log(msg, icon = '•') {
+  const div = document.createElement('div');
+  div.className = 'entry';
+  div.innerHTML = `<span class="icon">${icon}</span><span>${msg}</span>`;
+  logEl.appendChild(div);
+  logEl.scrollTop = logEl.scrollHeight;
+  // Keep log trim
+  while (logEl.children.length > 60) logEl.removeChild(logEl.firstChild);
+}
+
+// ── Drawing ────────────────────────────────────────────────────────────────
+function drawGround() {
+  const season = SEASONS[seasonIdx];
+  const grad = ctx.createLinearGradient(0, 0, W, H);
+  grad.addColorStop(0, season.bg1);
+  grad.addColorStop(1, season.bg2);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Subtle texture dots
+  ctx.globalAlpha = 0.08;
+  for (let i = 0; i < 120; i++) {
+    ctx.fillStyle = '#2d6a4f';
+    ctx.beginPath();
+    ctx.arc((i * 47) % W, (i * 83) % H, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawTerrain() {
+  const s = SEASONS[seasonIdx];
+  const isWinter = s.name.includes('Winter');
+  const isAutumn = s.name.includes('Autumn');
+
+  // Rocks
+  rocks.forEach(r => {
+    ctx.save();
+    ctx.translate(r.x, r.y);
+    ctx.rotate(r.angle);
+    ctx.fillStyle = '#9e9e9e';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, r.r, r.r * 0.7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#bdbdbd';
+    ctx.beginPath();
+    ctx.ellipse(-r.r * 0.2, -r.r * 0.2, r.r * 0.4, r.r * 0.25, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+
+  // Bushes
+  bushes.forEach(b => {
+    ctx.fillStyle = isWinter ? '#a5c8a5' : isAutumn ? '#c8832a' : '#388e3c';
+    ctx.globalAlpha = 0.7;
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(b.x + b.r * 0.6, b.y - b.r * 0.3, b.r * 0.7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  });
+
+  // Trees
+  trees.forEach(t => {
+    const sway = Math.sin(tick * 0.02 + t.sway) * 1.5;
+    // trunk
+    ctx.fillStyle = '#795548';
+    ctx.fillRect(t.x - 3, t.y, 6, t.r * 0.9);
+    // canopy
+    const leafColor = isWinter ? '#cfd8dc' : isAutumn ? '#e67e22' : '#2e7d32';
+    ctx.fillStyle = leafColor;
+    ctx.beginPath();
+    ctx.arc(t.x + sway, t.y - t.r * 0.3, t.r, 0, Math.PI * 2);
+    ctx.fill();
+    if (!isWinter) {
+      ctx.fillStyle = isAutumn ? '#d35400' : '#388e3c';
+      ctx.beginPath();
+      ctx.arc(t.x + sway - t.r * 0.4, t.y - t.r * 0.5, t.r * 0.65, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+}
+
+function drawWater() {
+  waterSpots.forEach(w => {
+    // Shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.08)';
+    ctx.beginPath();
+    ctx.ellipse(w.x + 3, w.y + 3, w.r * 1.6, w.r * 0.9, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Water body
+    const wg = ctx.createRadialGradient(w.x - w.r * 0.3, w.y - w.r * 0.3, 0, w.x, w.y, w.r * 1.6);
+    wg.addColorStop(0, '#90e0ef');
+    wg.addColorStop(1, '#0077b6');
+    ctx.fillStyle = wg;
+    ctx.beginPath();
+    ctx.ellipse(w.x, w.y, w.r * 1.6, w.r, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Shimmer
+    ctx.globalAlpha = 0.3 + 0.2 * Math.sin(tick * 0.05);
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.ellipse(w.x - w.r * 0.5, w.y - w.r * 0.25, w.r * 0.4, w.r * 0.18, -0.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  });
+}
+
+function drawFood() {
+  food.forEach(f => {
+    const scale = 0.5 + 0.5 * Math.min(f.grow / 30, 1);
+    ctx.save();
+    ctx.translate(f.x, f.y);
+    ctx.scale(scale, scale);
+    // Grass tuft
+    ctx.fillStyle = '#2DC653';
+    for (let i = -1; i <= 1; i++) {
+      ctx.beginPath();
+      ctx.moveTo(i * 3, 2);
+      ctx.quadraticCurveTo(i * 3 - 2, -f.r - 2, i * 2, -f.r * 1.5);
+      ctx.quadraticCurveTo(i * 3 + 2, -f.r - 2, i * 3, 2);
+      ctx.fillStyle = i === 0 ? '#27ae60' : '#2ecc71';
+      ctx.fill();
+    }
+    ctx.restore();
+  });
+}
+
+function drawAnimal(a) {
+  if (!a.alive) return;
+  const sp = SPECS[a.type];
+  ctx.save();
+  ctx.translate(a.x, a.y);
+
+  // Trail
+  if (a.trail.length > 1) {
+    ctx.globalAlpha = 0.12;
+    ctx.beginPath();
+    ctx.moveTo(a.trail[0].x - a.x, a.trail[0].y - a.y);
+    for (const p of a.trail) ctx.lineTo(p.x - a.x, p.y - a.y);
+    ctx.strokeStyle = sp.color;
+    ctx.lineWidth = a.size * 0.8;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  const wobble = Math.sin(a.wobble) * 0.08;
+
+  if (a.type === 'rabbit') {
+    // Shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.12)';
+    ctx.beginPath();
+    ctx.ellipse(2, a.size + 1, a.size * 0.9, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Body
+    ctx.fillStyle = a.state === 'flee' ? '#ff8c42' : sp.color;
+    ctx.beginPath();
+    ctx.ellipse(0, wobble, a.size, a.size * 0.85, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Tail
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(-a.size * 0.7, a.size * 0.3, a.size * 0.35, 0, Math.PI * 2);
+    ctx.fill();
+    // Ears
+    ctx.fillStyle = sp.dark;
+    ctx.beginPath(); ctx.ellipse(-a.size*0.3, -a.size*1.15 + wobble, a.size*0.2, a.size*0.5, -0.15, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse( a.size*0.3, -a.size*1.15 + wobble, a.size*0.2, a.size*0.5,  0.15, 0, Math.PI*2); ctx.fill();
+    // Inner ear
+    ctx.fillStyle = '#ffb3b3';
+    ctx.beginPath(); ctx.ellipse(-a.size*0.3, -a.size*1.15 + wobble, a.size*0.1, a.size*0.3, -0.15, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse( a.size*0.3, -a.size*1.15 + wobble, a.size*0.1, a.size*0.3,  0.15, 0, Math.PI*2); ctx.fill();
+    // Eye
+    ctx.fillStyle = '#333';
+    ctx.beginPath(); ctx.arc(a.size*0.35, -a.size*0.1 + wobble, 1.5, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(a.size*0.35 + 0.5, -a.size*0.1 + wobble - 0.5, 0.6, 0, Math.PI*2); ctx.fill();
+
+  } else if (a.type === 'fox') {
+    // Shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.12)';
+    ctx.beginPath();
+    ctx.ellipse(2, a.size + 1, a.size, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Body
+    ctx.fillStyle = a.state === 'flee' ? '#ff5e5e' : sp.color;
+    ctx.beginPath();
+    ctx.ellipse(0, wobble, a.size, a.size * 0.78, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Fluffy tail
+    ctx.fillStyle = '#ff6b35';
+    ctx.beginPath();
+    ctx.ellipse(-a.size * 0.85, a.size * 0.3 + wobble, a.size * 0.65, a.size * 0.45, 0.6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.ellipse(-a.size * 0.9, a.size * 0.25 + wobble, a.size * 0.3, a.size * 0.2, 0.6, 0, Math.PI * 2);
+    ctx.fill();
+    // Head / snout
+    ctx.fillStyle = sp.color;
+    ctx.beginPath();
+    ctx.ellipse(a.size * 0.65, -a.size * 0.05 + wobble, a.size * 0.52, a.size * 0.38, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Ears (triangular)
+    ctx.fillStyle = sp.dark;
+    ctx.beginPath();
+    ctx.moveTo(a.size*0.35, -a.size*0.55 + wobble);
+    ctx.lineTo(a.size*0.15, -a.size*0.95 + wobble);
+    ctx.lineTo(a.size*0.6,  -a.size*0.75 + wobble);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(a.size*0.7, -a.size*0.5 + wobble);
+    ctx.lineTo(a.size*0.6, -a.size*0.95 + wobble);
+    ctx.lineTo(a.size*0.95,-a.size*0.6 + wobble);
+    ctx.fill();
+    // Nose
+    ctx.fillStyle = '#2d1b00';
+    ctx.beginPath();
+    ctx.arc(a.size * 1.1, -a.size * 0.05 + wobble, 2, 0, Math.PI * 2);
+    ctx.fill();
+    // Eye
+    ctx.fillStyle = '#222';
+    ctx.beginPath(); ctx.arc(a.size*0.75, -a.size*0.2 + wobble, 1.8, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(a.size*0.75 + 0.6, -a.size*0.2 + wobble - 0.6, 0.7, 0, Math.PI*2); ctx.fill();
+
+  } else { // wolf
+    // Shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.14)';
+    ctx.beginPath();
+    ctx.ellipse(2, a.size + 1, a.size * 1.1, 3.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Body
+    ctx.fillStyle = a.state === 'hunt' ? '#8b5cf6' : sp.color;
+    ctx.beginPath();
+    ctx.ellipse(0, wobble, a.size, a.size * 0.75, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Underbelly
+    ctx.fillStyle = '#9d85c7';
+    ctx.beginPath();
+    ctx.ellipse(0, a.size * 0.3 + wobble, a.size * 0.65, a.size * 0.4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Head
+    ctx.fillStyle = sp.color;
+    ctx.beginPath();
+    ctx.ellipse(a.size * 0.75, -a.size * 0.0 + wobble, a.size * 0.55, a.size * 0.45, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Snout
+    ctx.fillStyle = '#5a3e7a';
+    ctx.beginPath();
+    ctx.ellipse(a.size * 1.15, a.size * 0.1 + wobble, a.size * 0.4, a.size * 0.28, 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    // Ears
+    ctx.fillStyle = sp.dark;
+    ctx.beginPath();
+    ctx.moveTo(a.size*0.5,  -a.size*0.5 + wobble);
+    ctx.lineTo(a.size*0.3,  -a.size   + wobble);
+    ctx.lineTo(a.size*0.75, -a.size*0.7 + wobble);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(a.size*0.85, -a.size*0.45 + wobble);
+    ctx.lineTo(a.size*0.7,  -a.size*0.95 + wobble);
+    ctx.lineTo(a.size*1.05, -a.size*0.6 + wobble);
+    ctx.fill();
+    // Eye (fierce glow)
+    ctx.fillStyle = '#ffcc00';
+    ctx.beginPath(); ctx.arc(a.size*0.85, -a.size*0.1 + wobble, 2.2, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#111';
+    ctx.beginPath(); ctx.arc(a.size*0.85, -a.size*0.1 + wobble, 1.1, 0, Math.PI*2); ctx.fill();
+    // Tail
+    ctx.strokeStyle = sp.color;
+    ctx.lineWidth = a.size * 0.4;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-a.size * 0.5, 0);
+    ctx.quadraticCurveTo(-a.size * 1.2, -a.size * 0.5, -a.size * 1.0, -a.size * 1.0 + wobble * 2);
+    ctx.stroke();
+  }
+
+  // Hunger bar
+  const barW = a.size * 2.5;
+  const hunger01 = Math.min(a.hunger / sp.hungerMax, 1);
+  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  ctx.beginPath(); ctx.roundRect(-barW/2, a.size + 3, barW, 4, 2); ctx.fill();
+  ctx.fillStyle = hunger01 > 0.75 ? '#ef4444' : hunger01 > 0.5 ? '#f59e0b' : '#22c55e';
+  ctx.beginPath(); ctx.roundRect(-barW/2, a.size + 3, barW * (1 - hunger01), 4, 2); ctx.fill();
+
+  // Old age greying overlay
+  const ageFrac = a.age / sp.ageMax;
+  if (ageFrac > 0.60) {
+    ctx.globalAlpha = (ageFrac - 0.60) / 0.40 * 0.45;
+    ctx.fillStyle = '#e0e0e0';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, a.size * 1.1, a.size * 1.0, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  // Sickness green tint + swirl icon
+  if (a.sick) {
+    ctx.globalAlpha = 0.30 + 0.15 * Math.sin(tick * 0.15);
+    ctx.fillStyle = '#4ade80';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, a.size * 1.1, a.size * 1.0, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.font = `${a.size * 1.1}px serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('🤧', 0, -a.size * 1.6);
+  }
+
+  // Injury limp indicator
+  if (a.injured && !a.sick) {
+    ctx.font = `${a.size * 1.0}px serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('🩹', 0, -a.size * 1.6);
+  }
+
+  ctx.restore();
+}
+
+// State emoji
+const stateEmoji = { wander: '', flee: '😱', hunt: '😈', eat: '😋', drink: '💧' };
+
+function drawWorld() {
+  ctx.clearRect(0, 0, W, H);
+  drawGround();
+  drawTerrain();
+  drawWater();
+  drawFood();
+  animals.forEach(drawAnimal);
+}
+
+// ── Stats ──────────────────────────────────────────────────────────────────
+function updateStats() {
+  const R = animals.filter(a => a.type === 'rabbit' && a.alive).length;
+  const F = animals.filter(a => a.type === 'fox'    && a.alive).length;
+  const W = animals.filter(a => a.type === 'wolf'   && a.alive).length;
+  const maxPop = 50;
+
+  document.getElementById('cntRabbit').textContent = R;
+  document.getElementById('cntFox').textContent    = F;
+  document.getElementById('cntWolf').textContent   = W;
+  document.getElementById('cntFood').textContent   = food.length;
+  document.getElementById('barRabbit').style.width = Math.min(100, R / maxPop * 100) + '%';
+  document.getElementById('barFox').style.width    = Math.min(100, F / maxPop * 100) + '%';
+  document.getElementById('barWolf').style.width   = Math.min(100, W / maxPop * 100) + '%';
+  document.getElementById('barFood').style.width   = Math.min(100, food.length / 60 * 100) + '%';
+  document.getElementById('genBadge').textContent  = '🍼 Generation ' + generation;
+
+  // Season
+  day = Math.floor(tick / 300);
+  seasonIdx = Math.floor(day / 7) % 4;
+  const s = SEASONS[seasonIdx];
+  const sb = document.getElementById('seasonBadge');
+  sb.textContent = s.name + ' · Day ' + (day % 7 + 1);
+  const bgMap = {
+    '🌸': '#d8f3dc,#2d6a4f',
+    '☀️': '#fff3b0,#f4a261',
+    '🍂': '#ffe8d6,#c77b3a',
+    '❄️': '#e0f4ff,#457b9d',
+  };
+  const [bg, col] = bgMap[s.icon].split(',');
+  sb.style.background = bg;
+  sb.style.color = col;
+
+  if (R === 0 && F === 0 && W === 0) { pauseSim(); log('🌍 Extinction... all animals have died.', '⚰️'); }
+}
+
+// ── Simulation step ────────────────────────────────────────────────────────
+function simStep() {
+  const speed = parseInt(document.getElementById('speedSlider').value);
+  const season = SEASONS[seasonIdx];
+
+  for (let s = 0; s < speed; s++) {
+    tick++;
+
+    // Regrow food (season-dependent)
+    if (tick % season.foodRate === 0 && food.length < 55) {
+      const f = makeFood();
+      f.grow = 0;
+      food.push(f);
+    }
+
+    // Grow existing food
+    food.forEach(f => { if (f.grow < 30) f.grow++; });
+
+    animals.forEach(a => { if (a.alive) updateAnimal(a); });
+    animals = animals.filter(a => a.alive);
+  }
+
+  drawWorld();
+  updateStats();
+}
+
+// ── Loop ───────────────────────────────────────────────────────────────────
+function loop(ts) {
+  if (!running) return;
+  if (ts - lastTime >= 33) { simStep(); lastTime = ts; }
+  rafId = requestAnimationFrame(loop);
+}
+
+function startSim() {
+  if (running) return;
+  if (animals.length === 0) { spawnInitial(); log('🌍 Ecosystem started! Watch the food chain unfold.', '🌿'); }
+  running = true;
+  rafId = requestAnimationFrame(loop);
+}
+
+function pauseSim() {
+  running = false;
+  if (rafId) cancelAnimationFrame(rafId);
+}
+
+function resetSim() {
+  pauseSim();
+  animals = []; food = []; waterSpots = []; generation = 0; tick = 0; day = 0; seasonIdx = 0;
+  logEl.innerHTML = '';
+  log('↺ World reset. Press Start to begin again!', '🌱');
+  drawWorld();
+  updateStats();
+}
+
+// Init
+drawWorld();
+updateStats();
+</script>
+</body>
+</html>
